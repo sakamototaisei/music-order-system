@@ -22,43 +22,27 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const getInitialData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single();
-        if (profile) {
-          setProfileName(profile.name || '');
-        }
-      }
-      setIsLoading(false);
-    };
-
-    getInitialData();
-
+    // onAuthStateChange handles the entire auth flow: initial load, login, and logout.
+    // It is called once on the initial load, and thereafter whenever the auth state changes.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user) {
-        // When a new session is detected (login/signup), fetch the profile again.
         const { data: profile } = await supabase
           .from('profiles')
           .select('name')
           .eq('id', session.user.id)
           .single();
-        if (profile) {
-          setProfileName(profile.name || '');
-        }
+        setProfileName(profile?.name || '');
       } else {
-        // On logout, clear the name.
+        // If there's no session, clear the profile name.
         setProfileName('');
       }
+      // Once all async operations are complete, set loading to false.
+      // This is now the single source of truth for ending the loading state.
       setIsLoading(false);
     });
 
+    // Cleanup the subscription when the component unmounts.
     return () => {
       subscription.unsubscribe();
     };
