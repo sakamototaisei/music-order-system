@@ -10,25 +10,58 @@ export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login'); // State to toggle
 
   // --- Authentication and State Management ---
+  const [profileName, setProfileName] = useState('');
+
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getInitialData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', session.user.id)
+          .single();
+        if (profile) {
+          setProfileName(profile.name || '');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    getInitialData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        // When a new session is detected (login/signup), fetch the profile again.
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', session.user.id)
+          .single();
+        if (profile) {
+          setProfileName(profile.name || '');
+        }
+      } else {
+        // On logout, clear the name.
+        setProfileName('');
+      }
+      setIsLoading(false);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // --- Event Handlers ---
@@ -39,7 +72,7 @@ export default function Home() {
       email,
       password,
       options: {
-        data: { username },
+        data: { name },
       },
     });
     if (error) {
@@ -100,6 +133,14 @@ export default function Home() {
   }, []);
 
   // --- Render Logic ---
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div>読み込み中...</div>
+      </div>
+    );
+  }
+
   if (!session) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -126,8 +167,8 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {authMode === 'signup' && (
               <div>
-                <label htmlFor="username" className="text-sm font-medium text-gray-700">ユーザー名</label>
-                <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900" placeholder="ユーザー名" required />
+                <label htmlFor="name" className="text-sm font-medium text-gray-700">ユーザー名</label>
+                <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900" placeholder="ユーザー名" required />
               </div>
             )}
             <div>
@@ -153,12 +194,12 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen py-12 bg-gray-100">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8 px-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">ようこそ、{session.user.user_metadata.username || session.user.email}さん！</h1>
-            <p className="mt-1 text-gray-600">{session.user.email} としてログイン中</p>
+            <h1 className="text-2xl font-bold text-gray-800">ようこそ、{profileName}さん</h1>
+            <div>
+              <a href="/profile" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">プロフィール編集</a>
+              <button onClick={handleLogout} disabled={loading} className="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
+            </div>
           </div>
-          <button onClick={handleLogout} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
-        </div>
         {message && <p className="mb-4 text-center text-red-500">{message}</p>}
         
         <MusicOrderForm user={session.user} onOrderCreated={handleOrderMutation} />

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import EditOrderModal from './EditOrderModal'; // Import the modal component
@@ -140,27 +140,47 @@ export default function OrderHistory({ user, refreshCounter, onOrderMutated }: O
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await supabase
+      .from('music_orders')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setOrders(data || []);
+    }
+    setLoading(false);
+  }, [user.id]);
+
+  // Initial fetch and visibility change handler
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      setError(null);
+    fetchOrders();
 
-      const { data, error } = await supabase
-        .from('music_orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setOrders(data || []);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders();
       }
-      setLoading(false);
     };
 
-    fetchOrders();
-  }, [user, refreshCounter]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchOrders]);
+
+  // Refetch when refreshCounter changes
+  useEffect(() => {
+    if (refreshCounter > 0) {
+      fetchOrders();
+    }
+  }, [refreshCounter, fetchOrders]);
 
   if (loading) {
     return <p>オーダー履歴を読み込み中...</p>;
