@@ -22,9 +22,11 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChange handles the entire auth flow: initial load, login, and logout.
-    // It is called once on the initial load, and thereafter whenever the auth state changes.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // 1. Initial check for the session on component mount.
+    // This runs only once and ensures the initial state is set correctly,
+    // resolving the Chrome reload issue.
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session?.user) {
         const { data: profile } = await supabase
@@ -33,14 +35,31 @@ export default function Home() {
           .eq('id', session.user.id)
           .single();
         setProfileName(profile?.name || '');
-      } else {
-        // If there's no session, clear the profile name.
-        setProfileName('');
       }
-      // Once all async operations are complete, set loading to false.
-      // This is now the single source of truth for ending the loading state.
-      setIsLoading(false);
-    });
+      setIsLoading(false); // End loading after the initial check is complete.
+    };
+
+    getInitialSession();
+
+    // 2. Set up a listener for subsequent auth state changes.
+    // This handles events like login, logout in another tab, or session expiry.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', session.user.id)
+            .single();
+          setProfileName(profile?.name || '');
+        } else {
+          setProfileName('');
+        }
+        // Note: We don't set loading state here, as this listener handles
+        // background updates, not the initial page load.
+      }
+    );
 
     // Cleanup the subscription when the component unmounts.
     return () => {
