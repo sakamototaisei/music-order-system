@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import MusicOrderForm from '@/components/MusicOrderForm';
@@ -21,6 +21,12 @@ export default function Home() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  useLayoutEffect(() => {
+    if (session) {
+      setIsLoading(false);
+    }
+  }, [session]);
+
   useEffect(() => {
     let isMounted = true;
     // 1. Initial check for the session on component mount.
@@ -31,15 +37,6 @@ export default function Home() {
       console.log('getInitialSession session', session); // デバッグ用
       if (!isMounted) return;
       setSession(session);
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single();
-        setProfileName(profile?.name || '');
-      }
-      setIsLoading(false); // ← ここで必ず呼ぶ
     };
 
     getInitialSession();
@@ -51,17 +48,6 @@ export default function Home() {
         console.log('onAuthStateChange session', session); // デバッグ用
         if (!isMounted) return;
         setSession(session);
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', session.user.id)
-            .single();
-          setProfileName(profile?.name || '');
-        } else {
-          setProfileName('');
-        }
-        setIsLoading(false); // ← 必ず呼ぶ
       }
     );
 
