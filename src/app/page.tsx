@@ -17,7 +17,6 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login'); // State to toggle
 
   // --- Authentication and State Management ---
-  const [profileName, setProfileName] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -197,7 +196,7 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen py-12 bg-gray-100">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8 px-4">
-            <h1 className="text-2xl font-bold text-gray-800">ようこそ、{profileName}さん</h1>
+            <h1 className="text-2xl font-bold text-gray-800">ようこそ</h1>
             <div>
               <a href="/profile" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">プロフィール編集</a>
               <button onClick={handleLogout} disabled={loading} className="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
