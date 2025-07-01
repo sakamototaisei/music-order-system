@@ -174,13 +174,13 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center min-h-screen py-12 bg-gray-100">
       <div className="w-full max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8 px-4">
-            <h1 className="text-2xl font-bold text-gray-800">ようこそ、音楽生成オーダーサイトへ</h1>
-            <div>
-              <a href="/profile" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">プロフィール編集</a>
-              <button onClick={handleLogout} disabled={loading} className="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 px-2 sm:px-4 w-full">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2 sm:mb-0">ようこそ、音楽生成オーダーサイトへ</h1>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+              <a href="/profile" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto text-center">プロフィール編集</a>
+              <button onClick={handleLogout} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 w-full sm:w-auto text-center">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
             </div>
-          </div>
+        </div>
         {message && <p className="mb-4 text-center text-red-500">{message}</p>}
         
         <MusicOrderForm user={session.user} onOrderCreated={handleOrderMutation} />
