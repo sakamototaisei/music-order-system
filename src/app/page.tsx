@@ -22,10 +22,16 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useLayoutEffect(() => {
+    console.log('useLayoutEffect session:', session);
     if (session) {
       setIsLoading(false);
+      console.log('setIsLoading false!');
     }
   }, [session]);
+
+  useEffect(() => {
+    console.log('isLoading changed:', isLoading);
+  }, [isLoading]);
 
   useEffect(() => {
     let isMounted = true;
