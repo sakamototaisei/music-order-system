@@ -22,11 +22,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     // 1. Initial check for the session on component mount.
     // This runs only once and ensures the initial state is set correctly,
     // resolving the Chrome reload issue.
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(session);
       if (session?.user) {
         const { data: profile } = await supabase
@@ -36,7 +38,7 @@ export default function Home() {
           .single();
         setProfileName(profile?.name || '');
       }
-      setIsLoading(false); // End loading after the initial check is complete.
+      setIsLoading(false); // ← ここで必ず呼ぶ
     };
 
     getInitialSession();
@@ -56,13 +58,13 @@ export default function Home() {
         } else {
           setProfileName('');
         }
-        // Note: We don't set loading state here, as this listener handles
-        // background updates, not the initial page load.
+        setIsLoading(false); // ← ここも追加
       }
     );
 
     // Cleanup the subscription when the component unmounts.
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
