@@ -28,6 +28,7 @@ export default function Home() {
     // resolving the Chrome reload issue.
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('getInitialSession session', session); // デバッグ用
       if (!isMounted) return;
       setSession(session);
       if (session?.user) {
@@ -47,6 +48,7 @@ export default function Home() {
     // This handles events like login, logout in another tab, or session expiry.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('onAuthStateChange session', session); // デバッグ用
         setSession(session);
         if (session?.user) {
           const { data: profile } = await supabase
