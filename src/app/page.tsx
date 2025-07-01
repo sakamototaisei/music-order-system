@@ -141,12 +141,15 @@ export default function Home() {
 
   // --- Render Logic ---
   if (isLoading) {
+    console.log('RENDER isLoading:', isLoading, 'session:', session); // デバッグ用
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div>読み込み中...</div>
       </div>
     );
   }
+
+  console.log('RENDER isLoading:', isLoading, 'session:', session); // デバッグ用
 
   if (!session) {
     return (
