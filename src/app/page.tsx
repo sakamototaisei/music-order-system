@@ -14,55 +14,33 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login'); // State to toggle
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   // --- Authentication and State Management ---
-  const [profileName, setProfileName] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Initial check for the session on component mount.
-    // This runs only once and ensures the initial state is set correctly,
-    // resolving the Chrome reload issue.
+    let isMounted = true;
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(session);
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single();
-        setProfileName(profile?.name || '');
-      }
-      setIsLoading(false); // End loading after the initial check is complete.
+      setIsLoading(false);
     };
 
     getInitialSession();
 
-    // 2. Set up a listener for subsequent auth state changes.
-    // This handles events like login, logout in another tab, or session expiry.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!isMounted) return;
         setSession(session);
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', session.user.id)
-            .single();
-          setProfileName(profile?.name || '');
-        } else {
-          setProfileName('');
-        }
-        // Note: We don't set loading state here, as this listener handles
-        // background updates, not the initial page load.
+        setIsLoading(false);
       }
     );
 
-    // Cleanup the subscription when the component unmounts.
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -197,7 +175,7 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen py-12 bg-gray-100">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8 px-4">
-            <h1 className="text-2xl font-bold text-gray-800">ようこそ、{profileName || 'ゲスト'}さん</h1>
+            <h1 className="text-2xl font-bold text-gray-800">ようこそ</h1>
             <div>
               <a href="/profile" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">プロフィール編集</a>
               <button onClick={handleLogout} disabled={loading} className="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">{loading ? 'ログアウト中...' : 'ログアウト'}</button>
