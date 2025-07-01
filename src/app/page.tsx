@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import MusicOrderForm from '@/components/MusicOrderForm';
@@ -14,49 +14,31 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login'); // State to toggle
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   // --- Authentication and State Management ---
 
   const [isLoading, setIsLoading] = useState(true);
 
-  useLayoutEffect(() => {
-    console.log('useLayoutEffect session:', session);
-    if (session) {
-      setIsLoading(false);
-      console.log('setIsLoading false!');
-    }
-  }, [session]);
-
-  useEffect(() => {
-    console.log('isLoading changed:', isLoading);
-  }, [isLoading]);
-
   useEffect(() => {
     let isMounted = true;
-    // 1. Initial check for the session on component mount.
-    // This runs only once and ensures the initial state is set correctly,
-    // resolving the Chrome reload issue.
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('getInitialSession session', session); // デバッグ用
       if (!isMounted) return;
       setSession(session);
+      setIsLoading(false);
     };
 
     getInitialSession();
 
-    // 2. Set up a listener for subsequent auth state changes.
-    // This handles events like login, logout in another tab, or session expiry.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log('onAuthStateChange session', session); // デバッグ用
         if (!isMounted) return;
         setSession(session);
+        setIsLoading(false);
       }
     );
 
-    // Cleanup the subscription when the component unmounts.
     return () => {
       isMounted = false;
       subscription.unsubscribe();
@@ -133,15 +115,12 @@ export default function Home() {
 
   // --- Render Logic ---
   if (isLoading) {
-    console.log('RENDER isLoading:', isLoading, 'session:', session); // デバッグ用
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div>読み込み中...</div>
       </div>
     );
   }
-
-  console.log('RENDER isLoading:', isLoading, 'session:', session); // デバッグ用
 
   if (!session) {
     return (
