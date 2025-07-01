@@ -49,6 +49,7 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log('onAuthStateChange session', session); // デバッグ用
+        if (!isMounted) return;
         setSession(session);
         if (session?.user) {
           const { data: profile } = await supabase
@@ -60,7 +61,7 @@ export default function Home() {
         } else {
           setProfileName('');
         }
-        setIsLoading(false); // ← ここも追加
+        setIsLoading(false); // ← 必ず呼ぶ
       }
     );
 
